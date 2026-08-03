@@ -1,0 +1,36 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: pip install pytest pyyaml
+
+      # The suite is offline by design. Running it with an empty environment is
+      # the check that it stays that way: no credentials, no network, no reading
+      # the developer's own course folders.
+      - name: Run tests with no environment
+        run: env -i PATH="$PATH" HOME=/tmp/ci-home python -m pytest tests/ -q
+
+      - name: Every script compiles
+        run: python -m compileall -q scripts/
+
+      - name: Prose check on authored documentation
+        run: python scripts/prose_check.py README.md skills/*/SKILL.md
+
+      - name: Validate plugin structure
+        run: python .github/validate_plugin.py

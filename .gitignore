@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+*.egg-info/
+.venv/
+venv/
+
+# Built artifact. Released, not committed.
+*.plugin
+
+# Never commit a real course. Student records, credentials, and course state
+# all live in a course folder, which belongs on the instructor's disk.
+.infra/
+.canvas-cache/
+courses/

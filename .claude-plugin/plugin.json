@@ -1,0 +1,19 @@
+{
+  "name": "course-manager",
+  "version": "0.5.0",
+  "description": "Manage college courses end to end: one folder per course, shared course knowledge, and skills for syllabi, assignments, student questions, grading, reporting, and class communication across Canvas, Piazza, and Gradescope. Includes the full Canvas API surface with a two-switch write gate and an audit trail on every write. Every drafted document is checked against Wikipedia's signs of AI writing before it is handed over.",
+  "author": {
+    "name": "Tim Richards"
+  },
+  "keywords": [
+    "teaching",
+    "course",
+    "canvas",
+    "piazza",
+    "gradescope",
+    "grading",
+    "syllabus",
+    "higher-education"
+  ],
+  "license": "MIT"
+}

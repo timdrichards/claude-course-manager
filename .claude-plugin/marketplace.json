@@ -1,0 +1,13 @@
+{
+  "name": "claude-course-manager",
+  "owner": {
+    "name": "Tim Richards"
+  },
+  "plugins": [
+    {
+      "name": "course-manager",
+      "source": "./",
+      "description": "Manage college courses end to end: one folder per course, shared course knowledge, and skills for syllabi, assignments, student questions, grading, reporting, and class communication across Canvas, Piazza, and Gradescope."
+    }
+  ]
+}
