@@ -49,6 +49,12 @@ Also ask whether existing material should be adapted. A unit page, a lab handout
 deck is better raw material than anything invented here, and the code examples in it are already
 known to compile.
 
+When the deck is for a numbered unit, read that unit first with
+`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/units.py path 326 9` and build from it. Save the result as
+`slides.html` inside the unit folder, so the lesson and the deck get revised together. The units
+skill has what a unit deck should carry, in
+`${CLAUDE_PLUGIN_ROOT}/skills/units/references/unit-artifacts.md`.
+
 ## The design pass, before any code
 
 Do this first, in prose, in three or four sentences. Skipping it is how every deck ends up looking

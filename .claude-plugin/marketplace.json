@@ -8,7 +8,7 @@
     {
       "name": "course-manager",
       "source": "./",
-      "description": "Manage college courses end to end: one folder per course, shared course knowledge, and skills for syllabi, assignments, student questions, grading, reporting, and class communication across Canvas, Piazza, and Gradescope."
+      "description": "Manage college courses end to end: one folder per course, shared course knowledge, and skills for syllabi, course units and the arc they form, assignments, lecture decks, student questions, grading, reporting, and class communication across Canvas, Piazza, and Gradescope."
     }
   ]
 }

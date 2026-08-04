@@ -1,0 +1,177 @@
+/*
+ * Default stylesheet for unit pages rendered to Canvas-ready HTML by
+ * scripts/render_html.py. Copy it, edit the copy, and pass --css to use a
+ * course's own look.
+ *
+ * Constraints, and they are hard ones: this file is inlined onto every
+ * element by premailer before the HTML reaches Canvas, so it must stick to
+ * plain selectors. No :hover, no media queries, no pseudo-elements, no CSS
+ * variables. premailer resolves each rule standalone per element and has
+ * nowhere to put any of those in an inline-only document, so it drops them
+ * silently. See skills/units/references/canvas-render.md.
+ */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  color: #1b1f23;
+  background-color: #ffffff;
+  line-height: 1.65;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  font-size: 17px;
+}
+
+h1, h2, h3, h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #0b2545;
+  line-height: 1.25;
+  margin-top: 2.2em;
+  margin-bottom: 0.6em;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 2rem;
+  border-bottom: 3px solid #0fb9b1;
+  padding-bottom: 0.4em;
+  margin-top: 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #d8dee4;
+  padding-bottom: 0.3em;
+}
+
+h3 {
+  font-size: 1.2rem;
+  color: #134074;
+}
+
+h4 {
+  font-size: 1.05rem;
+}
+
+p, ul, ol, table, blockquote {
+  margin-top: 0;
+  margin-bottom: 1.1em;
+}
+
+ul, ol {
+  padding-left: 1.6em;
+}
+
+li {
+  margin-bottom: 0.35em;
+}
+
+a {
+  color: #0b6e99;
+  text-decoration: underline;
+}
+
+strong {
+  color: #0b2545;
+}
+
+/* Inline code: near body size (0.95em, not 0.9em) so it doesn't read as
+ * shrunken next to the prose. Monospace has a larger apparent size at equal
+ * em, so a hair under 1em keeps it visually matched rather than oversized. */
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+  font-size: 0.95em;
+  background-color: #f0f3f6;
+  color: #1b1f23;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: none;
+}
+
+/* Standalone code block (a raw <pre> not produced by the highlighter). */
+pre {
+  background-color: #0b2545;
+  color: #f6f8fb;
+  padding: 1em 1.2em;
+  border-radius: 6px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin-bottom: 1.3em;
+  font-size: 1em;   /* match body; was 0.88em on the inner code and looked tiny */
+  border: none;
+}
+
+/* Highlighted code block. render_html.py's Pygments pass emits
+ * <div class="codehilite" style="background:<theme>"><pre><code><span ...>.
+ * The theme background is inlined on the div, so the container styling lives
+ * here; the inner <pre> is neutralized to avoid a double box, and a light
+ * default color keeps any un-tokenized text (e.g. a language-less block)
+ * readable on the dark theme background. */
+.codehilite {
+  padding: 1em 1.2em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1.3em;
+  color: #e6edf3;
+  border: none;
+}
+
+.codehilite pre {
+  background-color: transparent;
+  color: #e6edf3;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  line-height: 1.5;
+  border: none;
+}
+
+/* Code text at full body size in both block kinds; token <span>s keep their
+ * own inline color from Pygments. Canvas's own site CSS puts a visible
+ * border on bare <code>/<pre> elements; every rule here sets border: none
+ * explicitly so premailer inlines an override, since an unset property in
+ * our stylesheet doesn't override Canvas's page-level CSS the way an
+ * explicit inline value does. */
+pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 1em;
+  border: none;
+}
+
+blockquote {
+  border-left: 4px solid #0fb9b1;
+  margin-left: 0;
+  padding: 0.4em 1.2em;
+  color: #5c6b7a;
+  background-color: #f6f8fb;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #d8dee4;
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+
+th {
+  background-color: #f0f3f6;
+  color: #0b2545;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #d8dee4;
+  margin: 2.5em 0;
+}
+
+img {
+  max-width: 100%;
+}

@@ -138,6 +138,8 @@ instructor with three years of muscle memory for `Homework/` is not helped by a 
 
 - **`.infra/`** is tool state: credentials, per-service config, fetch inboxes, audit logs. It is
   not course material and it is not for hand-editing except for the credentials files.
+- **`course/units/`** has a shape of its own: one folder per unit, plus `arc.md` for the course's
+  through line. The units skill owns it, and `units.py` builds and checks it.
 - **The syllabus** lives on the LMS, not in the folder. Keep a copy under `course/` if you like,
   and treat the live page as the source of truth.
 - **`.canvas-cache/`** is written by the Canvas scripts in whatever directory they run from, and
