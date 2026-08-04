@@ -10,7 +10,7 @@ This repository is a Claude plugin and doubles as a single-plugin marketplace, s
 from the repo itself:
 
 ```
-/plugin marketplace add <owner>/claude-course-manager
+/plugin marketplace add timdrichards/claude-course-manager
 /plugin install course-manager@claude-course-manager
 ```
 

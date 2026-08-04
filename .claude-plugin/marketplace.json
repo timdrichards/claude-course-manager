@@ -1,7 +1,8 @@
 {
   "name": "claude-course-manager",
   "owner": {
-    "name": "Tim Richards"
+    "name": "Tim Richards",
+    "url": "https://github.com/timdrichards"
   },
   "plugins": [
     {
