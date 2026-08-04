@@ -7,6 +7,24 @@ and their trigger descriptions, script names and their command-line flags, the J
 scripts read and write, the reference file names a skill links to, and the documented safety
 rules. Prose improvements inside a reference are not a version bump. Renaming a flag is.
 
+## 0.6.0
+
+Lecture decks as reveal.js HTML.
+
+- New `lecture-decks` skill: single-file reveal.js decks with auto-animate code diffs, morphing
+  diagrams, an interactive slide, and speaker notes, sized to read from the back of a lecture hall.
+- New `deck_check.py`, offline by default, with `--check-urls` to resolve CDN references. It
+  encodes the failure modes that render without raising anything in a browser: a missing
+  `.reveal-viewport` override, reveal 3 and 4 paths, mismatched auto-animate ids, undersized type,
+  browser storage, local file references, and em dashes in visible slide text.
+- The viewport override is treated as mandatory rather than a debugging step. `reveal.min.css`
+  itself, not a theme file, sets that wrapper to white, so a dark deck without the override ships
+  looking washed out.
+- Deck sizing guidance is measured rather than estimated. On a widescreen projector the deck
+  height sets the scale factor and the width does nothing, so the skill's `deck-scaffold` reference carries
+  a scale table and source-size floors instead of an instruction to make the text bigger.
+- The syllabus skill's companion overview deck now names this skill as the deck pipeline.
+
 ## 0.5.0
 
 Course folder layout.

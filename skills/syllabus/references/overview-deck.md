@@ -49,13 +49,19 @@ start to finish.
 
 ## Building it
 
-**If the course has its own deck pipeline, use it.** Look for a theme file in the course folder
-(`.deck-theme.json` or similar) and a build script or deck-template helper. Match the existing
-decks: a syllabus overview that looks unlike every unit deck is its own kind of wrong. Read one
-of the course's existing decks and its build script before writing anything.
+**Match the course's existing decks.** A syllabus overview that looks unlike every unit deck is
+its own kind of wrong. Look in `course/slides/` and read one before writing anything, along with
+any theme file or build script the course keeps beside them.
 
-**Otherwise, use the pptx skill.** Read its SKILL.md first, then build from the content plan
-above.
+**The default is the lecture-decks skill**, which builds single-file reveal.js decks. Read
+`${CLAUDE_PLUGIN_ROOT}/skills/lecture-decks/SKILL.md` and hand it the content plan above. An
+overview deck is mostly facts rather than animation, so it uses little of what that skill offers
+beyond the scaffold and the sizing, and that is fine. The reason to build it there anyway is that
+it comes out looking like the rest of the course's decks.
+
+**Use the pptx skill instead when the deck has to be a .pptx**, because a department wants the
+file, a co-instructor will edit it in PowerPoint, or it is going somewhere that will not open
+HTML. Read its SKILL.md first, then build from the content plan above.
 
 Either way the content comes from the live syllabus, fetched fresh, not from the course profile's
 summary and not from the previous term's deck.
