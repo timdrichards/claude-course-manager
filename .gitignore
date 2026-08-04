@@ -15,3 +15,6 @@ venv/
 .infra/
 .canvas-cache/
 courses/
+
+# Scratch: files this session could not delete from your disk.
+_to_delete/
