@@ -102,6 +102,27 @@ def verify(html):
     return problems
 
 
+def lesson_in(folder):
+    """The lesson inside a unit folder, whatever this course calls it.
+
+    `unit.md` is the default layout's name, but a course that already had units
+    before this plugin existed calls it `12.md`, and pointing the renderer at a
+    folder should work for both. Anything else is ambiguous and says so rather
+    than picking one.
+    """
+    default = os.path.join(folder, "unit.md")
+    if os.path.isfile(default):
+        return default, None
+    found = sorted(f for f in os.listdir(folder)
+                   if f.endswith(".md") and not f.startswith("."))
+    if len(found) == 1:
+        return os.path.join(folder, found[0]), None
+    if not found:
+        return None, f"{folder} has no Markdown file in it."
+    return None, (f"{folder} has several Markdown files ({', '.join(found)}) and "
+                  f"no unit.md. Name the one to render.")
+
+
 def main():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -117,10 +138,9 @@ def main():
 
     src = args.source
     if os.path.isdir(src):
-        unit_md = os.path.join(src, "unit.md")
-        if not os.path.isfile(unit_md):
-            sys.exit(f"error: {src} has no unit.md")
-        src = unit_md
+        src, problem = lesson_in(src)
+        if problem:
+            sys.exit(f"error: {problem}")
     if not os.path.isfile(src):
         sys.exit(f"error: no such file: {src}")
     if not os.path.isfile(args.css):
@@ -134,9 +154,13 @@ def main():
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(html)
     print(out)
-    for p in problems:
-        print(f"  FAIL {p}", file=sys.stderr)
-    return 1 if problems else 0
+    if problems:
+        print(f"\n{out} was written so the problem can be looked at, and it is "
+              f"not fit to post:", file=sys.stderr)
+        for problem in problems:
+            print(f"  FAIL {problem}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

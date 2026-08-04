@@ -124,7 +124,10 @@ it writes a metadata file per unit, with the number from the folder and the titl
 own first heading, chaining `next` down the sequence.
 
 It writes nothing without `--write`, renames nothing ever, and skips any unit that already has
-metadata. Objectives come out empty, which is the honest answer: nothing can infer them from prose.
+metadata. Two fields come out deliberately blank. Objectives are empty, because nothing can infer
+them from prose. Status is `draft` on every unit, including ones that have been live to students
+for a year, because adoption has no way to know and this plugin does not invent a fact about a
+course. Correct both by hand, or from what a Canvas listing says.
 
 ### What `new` does
 

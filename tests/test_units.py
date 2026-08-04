@@ -187,6 +187,24 @@ class TestNewUnit(UnitsCase):
         self.assertIn("Trace a request through a server",
                       (folder / "unit.md").read_text())
 
+    def test_a_required_folder_artifact_is_created(self):
+        """A new unit must not fail its own check the moment it exists."""
+        cfg = un.units_config(self.root)
+        cfg["artifacts"] = {"code": "required", "quiz.json": "optional"}
+        un.save_units_config(self.root, cfg)
+        folder, _ = un.new_unit(self.root, 1, "Sockets",
+                                objectives=["Trace a request"])
+        self.assertTrue((folder / "code").is_dir())
+        ids = [f["id"] for f in un.check_unit(self.root, un.find_unit(self.root, 1))]
+        self.assertNotIn("missing-artifact", ids)
+
+    def test_folder_artifacts_follow_the_courses_own_naming(self):
+        cfg = un.units_config(self.root)
+        cfg["artifacts"] = {"unit-{n}-code": "optional"}
+        un.save_units_config(self.root, cfg)
+        folder, _ = un.new_unit(self.root, 7, "Sockets")
+        self.assertTrue((folder / "unit-07-code").is_dir())
+
     def test_refuses_a_duplicate_number(self):
         un.new_unit(self.root, 1, "First")
         with self.assertRaises(SystemExit):
@@ -219,6 +237,16 @@ class TestParsing(UnitsCase):
         text = "# Unit 1: Shell\n\n## Notes\n\n```bash\n# Introduction\necho hi\n```\n"
         _, sections = un.parse_sections(text)
         self.assertEqual([s["key"] for s in sections], ["notes"])
+
+    def test_a_document_whose_sections_are_h1(self):
+        """Some courses write the whole unit at one heading level. That must not
+        read as a document with no sections at all."""
+        text = ("# Unit 1: Sockets\n\n# Introduction\n\nA thing happens.\n\n"
+                "# Looking Ahead\n\nUnit 2 is next.\n")
+        _, sections = un.parse_sections(text)
+        keys = [s["key"] for s in sections]
+        self.assertIn("introduction", keys)
+        self.assertIn("looking ahead", keys)
 
     def test_unlabeled_fence_is_reported_labeled_one_is_not(self):
         text = "```js\nlet a;\n```\n\n```\nplain\n```\n"
@@ -522,6 +550,19 @@ class TestAdopt(ExistingRepoCase):
         meta = json.loads((d / "unit.json").read_text())
         self.assertEqual(meta["title"], "Mine")
         self.assertEqual(meta["objectives"], ["Trace a request"])
+
+    def test_adoption_does_not_claim_a_unit_is_published(self):
+        """Having a title is not evidence that students can see it. This plugin
+        does not invent a fact about a course."""
+        self.add(8, "adapter", "Adapter")
+        un.adopt(self.root, path="Reference Units", write=True)
+        meta = json.loads((self.base / "08-adapter" / "unit.json").read_text())
+        self.assertEqual(meta["status"], "draft")
+
+    def test_an_empty_folder_says_so(self):
+        (self.root / "Nothing Here").mkdir()
+        with self.assertRaises(SystemExit):
+            un.adopt(self.root, path="Nothing Here")
 
     def test_title_strips_the_numbering_it_repeats(self):
         self.add(12, "resilience", "Resilience and Failure Modes")

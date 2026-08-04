@@ -59,7 +59,9 @@ Units, and the arc they form.
   remember, and exits non-zero when the page would reach Canvas stripped of its formatting or
   missing the heading Canvas derives a page title from.
 - `render_html.py` is the only script here needing packages outside the standard library
-  (`markdown`, `premailer`, `pygments`), and it names the one that is missing.
+  (`markdown`, `premailer`, `pygments`), and it names the one that is missing. Pointed at a unit
+  folder it takes `unit.md`, or the folder's single Markdown file, so a course calling its lessons
+  `12.md` needs no arguments.
 - The unit deck is planned here and built by `lecture-decks`. The PowerPoint path is covered too,
   including reusing a course's `.deck-theme.json` rather than restyling per deck.
 

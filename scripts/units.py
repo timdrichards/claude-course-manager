@@ -323,7 +323,13 @@ def parse_sections(text):
         h["end"] = heads[i + 1]["start"] if i + 1 < len(heads) else len(text)
         h["body"] = text[h["start"]:h["end"]]
 
-    top = min((h["level"] for h in heads if h["level"] > 1), default=2)
+    # Section level: the shallowest heading below the title. A document that
+    # uses H1 for its sections has no such heading, so the sections are the H1s
+    # after the first one, which is the title.
+    top = min((h["level"] for h in heads if h["level"] > 1), default=None)
+    if top is None:
+        heads_after_title = [h for h in heads if h["level"] == 1][1:]
+        top = 1 if heads_after_title else 2
     sections = []
     for i, h in enumerate(heads):
         if h["level"] != top:
@@ -866,10 +872,10 @@ def new_unit(root, number, title, act=None, objectives=(), prereqs=(),
         md_path.write_text(skeleton(cfg, meta))
         created.append(str(md_path))
 
-    for pattern, requirement in (cfg.get("artifacts") or {}).items():
+    for pattern in (cfg.get("artifacts") or {}):
         name = artifact_name(cfg, here, pattern)
-        if "." in name or requirement == "required":
-            continue  # a file is written when it is written; only make folders
+        if "." in name:
+            continue  # a file gets written when there is something to put in it
         if not (folder / name).exists():
             (folder / name).mkdir()
             created.append(str(folder / name) + "/")
@@ -964,6 +970,9 @@ def adopt(root, path=None, write=False):
                  f"are already in.")
 
     found = detect_layout(base)
+    if not found["folders"]:
+        sys.exit(f"No numbered unit folders in {base}. Units are folders named "
+                 f"NN-slug; pass --path if they live somewhere else.")
     cfg["files"] = {**cfg.get("files", {}), "lesson": found["lesson"]}
     cfg["number_width"] = found["number_width"]
     # What is on disk replaces the preset's suggestions. Anything the course
@@ -991,7 +1000,7 @@ def adopt(root, path=None, write=False):
             "prereqs": [],
             "next": None,
             "reading": "",
-            "status": "published" if title else "draft",
+            "status": "draft",
             "canvas": {"page_url": "", "page_id": None},
         }, f"from {unit_file(cfg, unit, 'lesson').name}"))
 
@@ -1181,6 +1190,11 @@ def main():
         else:
             print(format_adoption(report, args.write))
         return 0
+
+    if args.unit is not None and args.command in ("path", "check"):
+        if not str(args.unit).lstrip("-").isdigit():
+            sys.exit(f"{args.unit!r} is not a unit number. Pass the number, or "
+                     f"leave it off to cover every unit.")
 
     if args.command == "path":
         if not args.unit:

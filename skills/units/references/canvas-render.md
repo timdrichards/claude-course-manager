@@ -24,8 +24,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/render_html.py unit.md --css course/theme.
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/render_html.py unit.md --code-style dracula
 ```
 
-Point it at a unit folder and it renders `unit.md` to `unit.html` beside it. Point it at a file and
-it renders that file.
+Point it at a unit folder and it renders the lesson beside it. It takes `unit.md` when there is
+one, and otherwise the folder's single Markdown file, so a course whose lessons are called `12.md`
+works without arguments. A folder with several Markdown files says so rather than guessing. Point
+it at a file and it renders that file.
 
 With no `--css` it inlines `${CLAUDE_PLUGIN_ROOT}/assets/unit.css`: system font stack, a 760px
 measure, a dark code container, styled tables and blockquotes. With `--css` the given stylesheet is
@@ -54,8 +56,8 @@ relying on them ships monochrome.
 Two invariants, checked on every run rather than left for someone to remember:
 
 1. **No `<style>`, `<link>`, or `<script>` in the output.** A match means the stylesheet had a rule
-   premailer could not inline. The script exits 1 and names the tags. Fix the stylesheet rather
-   than shipping the file.
+   premailer could not inline. The script exits 1 and names the tags. The file is still written, so
+   the problem can be looked at, and it says plainly that what it wrote is not fit to post.
 2. **A first `<h1>` or `<h2>` survived.** The Canvas page workflow derives a page title from that
    element, so a render that lost it produces a page named something nobody chose.
 
