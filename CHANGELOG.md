@@ -7,6 +7,68 @@ and their trigger descriptions, script names and their command-line flags, the J
 scripts read and write, the reference file names a skill links to, and the documented safety
 rules. Prose improvements inside a reference are not a version bump. Renaming a flag is.
 
+## 0.7.0
+
+Units, and the arc they form.
+
+**The unit**
+
+- New `units` skill. A unit is a folder rather than a file: the lesson, the code it tells students
+  to type, and whichever of the quiz, deck, and Canvas render that unit has, alongside a metadata
+  file recording what it teaches and where it sits.
+- New `units.py`: `list`, `new`, `adopt`, `check`, `arc`, `shape`, `path`. `check` reads one unit
+  against the course's own section contract; `arc` reads the units against each other. Both exit 1
+  on a `FAIL`, so either works as a pre-publish step. Pure standard library.
+- The section contract is per course, recorded in `course.json` under `units`, and every check
+  follows it rather than following this plugin's opinion. Three presets ship as starting points:
+  `knowledge-unit` (the default, a broken example repaired in front of the reader, with the three
+  Notes beats), `lecture`, and `minimal`. A course can replace the section list entirely.
+- Learning objectives live in the unit's metadata and are written into the lesson where students
+  see them. Objectives naming an unobservable state, such as "understand", are flagged, since
+  nothing can check one.
+
+**The arc**
+
+- The arc checks are the ones that cannot be made from inside a single unit: numbering gaps,
+  duplicate numbers, a prerequisite pointing forward or at nothing, an act whose units are not
+  consecutive, a `next` pointer that outlived the unit it named, a Looking Ahead promising a unit
+  that no longer follows, and an Introduction that never names the unit before it.
+- Acts group units into the parts of a course's argument, and are all or nothing: a course where
+  some units belong to a named part and others float reads worse than one with no parts at all.
+- `arc.md` at the units root carries the through line, and its absence is reported.
+
+**Courses that already have units**
+
+- Unit locations and filenames are configurable, because a course that already has units named
+  them years ago. `path` points at the existing folder, and `files` and `artifacts` take patterns
+  with `{n}`, `{number}`, and `{slug}`, so `Reference Units/12-resilience/12.md` is read where it
+  sits.
+- New `units.py adopt`: reads a folder of units that already exists, infers the lesson filename
+  from what most units share rather than from whichever folder sorts first, lists the per-unit
+  artifacts while ignoring one-offs, and writes one metadata file per unit with the title taken
+  from each lesson's own heading. It previews by default, renames nothing, moves nothing, and never
+  overwrites metadata that is already there.
+- A repo that is not a course-manager course keeps the same config in `.units.json` at its root, so
+  adopting a folder of units does not require adopting the course layout first.
+
+**Publishing a unit**
+
+- New `render_html.py` and `assets/unit.css`: Markdown to Canvas-ready HTML with the styling
+  inlined onto every element, and syntax highlighting inlined per token, which is the only kind
+  Canvas does not strip. It verifies its own output rather than leaving a `grep` for someone to
+  remember, and exits non-zero when the page would reach Canvas stripped of its formatting or
+  missing the heading Canvas derives a page title from.
+- `render_html.py` is the only script here needing packages outside the standard library
+  (`markdown`, `premailer`, `pygments`), and it names the one that is missing.
+- The unit deck is planned here and built by `lecture-decks`. The PowerPoint path is covered too,
+  including reusing a course's `.deck-theme.json` rather than restyling per deck.
+
+**Also**
+
+- New `worked-example.md` reference: one full annotated unit, for when a model beats a description.
+- `course/units/` now has a documented shape of its own in the layout reference, and `lecture-decks`
+  points at the units skill when a deck belongs to a numbered unit.
+
 ## 0.6.0
 
 Lecture decks as reveal.js HTML.

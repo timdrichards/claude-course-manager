@@ -1,6 +1,6 @@
 # Course Manager
 
-Nine skills that share one idea: **a course is a folder**, and everything about it lives in that
+Ten skills that share one idea: **a course is a folder**, and everything about it lives in that
 folder in a shape every skill understands. Set a course up once and the syllabus skill, the grading
 skill, the lecture deck builder, and the Piazza digest all know the same facts about it.
 
@@ -22,6 +22,7 @@ extra packages, and Claude will tell you when you first need them:
 ```bash
 pip install piazza-api                # student-questions
 pip install requests beautifulsoup4   # gradescope
+pip install markdown premailer pygments   # rendering a unit for Canvas
 ```
 
 Nothing is configured globally. Everything is per course, in a folder you choose.
@@ -83,6 +84,42 @@ promises a two-day late cutoff while Canvas is configured with none is how a gra
 > The late policy changed. Update the syllabus and tell the class.
 
 > Make a syllabus quiz, ten questions, over the parts students get wrong.
+
+### Units
+
+> Write unit 9 on idempotency. It follows the retries unit and the reading is chapter 5.
+
+> What's the arc of this course? Does it hold together?
+
+> My units are inconsistent. Give them a shape and tell me which ones don't match it.
+
+> Turn unit 9 into a Canvas page.
+
+> Adopt the units I already have in 426. They're in Reference Units.
+
+A unit here is a folder, not a file. It holds the lesson, the code students type, the quiz, the
+deck, and the Canvas render, plus a small metadata file recording what the unit teaches, which
+units it stands on, and which act of the course it belongs to.
+
+A course that already has units keeps them where they are. Adoption reads the folder, works out
+what you call your lesson files, and writes down what it found, one small metadata file per unit
+with the title taken from the unit's own heading. It renames nothing, moves nothing, and previews
+before it writes. A folder of units that is not a course-manager course works the same way, with
+its config in a `.units.json` at the root.
+
+The shape of a lesson is per course and written down once. The default is a concept-first unit
+built around a small program that looks fine, is not, and gets repaired in front of the reader,
+with an exercise whose success condition is a value the student can actually see. Any course can
+replace all of it, and every check follows the course's version rather than the default.
+
+The check worth running is the one that reads the units against each other:
+
+> Audit the sequence for 326 before the semester starts.
+
+Numbering gaps, a prerequisite that points forward, an act whose units are not consecutive, a unit
+whose closing paragraph promises a topic that no longer follows it. None of that is visible from
+inside a single unit, which is why it survives a whole term, and it is the difference between a
+course a student can summarize afterwards and fifteen good lessons in a row.
 
 ### Lecture decks
 
@@ -244,6 +281,7 @@ Ask "what student data do I have on disk for 326" any time.
 |---|---|
 | **course-setup** | Creates and inspects courses, connects platforms, builds and maintains the course profile. Everything else reads what this writes. |
 | **syllabus** | Drafts, reviews, and edits the syllabus as a live LMS page; audits it against what the course actually does; rolls it into a new term; builds the syllabus quiz and the companion overview deck. |
+| **units** | Numbered lessons with a section shape the course chooses, learning objectives, prerequisites, and a place in the course's arc. Each unit is a folder: lesson, code, quiz, deck, Canvas render. Audits the whole sequence, not one unit at a time. |
 | **lecture-decks** | Single-file reveal.js lecture decks with animated code diffs, morphing diagrams, an interactive slide, and speaker notes, sized to read from the back of a lecture hall. |
 | **assignments** | Writes and reviews assignment specs, scopes them honestly, and catches ambiguity before students find it. |
 | **student-questions** | Socratic replies to student questions, plus fetching unanswered Piazza threads, posting approved replies, and flagging public posts that leak assignment code. |
@@ -263,7 +301,9 @@ Ask "what student data do I have on disk for 326" any time.
 │   ├── canvas/                same shape
 │   └── gradescope/            same shape
 ├── course/                    survives every offering
-│   ├── units/  homework/  labs/  code/
+│   ├── units/                 one folder per unit, plus arc.md
+│   │   └── 09-idempotency/    unit.json, unit.md, code/, quiz.json, slides.html
+│   ├── homework/  labs/  code/
 │   └── slides/  videos/  reading/  drafts/
 └── semesters/
     ├── current -> 2026-07-summer-2
@@ -323,6 +363,8 @@ trusting it, and because these are useful directly if you want them.
 |---|---|
 | `course_infra.py` | Owns the layout and the registry. `init`, `verify`, `layout`, `list`, `register`, `unregister`, `set-root`, `path`. |
 | `prose_check.py` | Flags writing that reads as machine-generated. Runs before anything drafted is handed over. |
+| `units.py` | The unit folder, the per-course section contract, and the arc report. `list`, `new`, `adopt`, `check`, `arc`, `shape`, `path`. Adopts a folder of units that already exists without renaming anything. |
+| `render_html.py` | Renders a unit's Markdown to Canvas-ready HTML, styling inlined onto every element, and verifies its own output against what Canvas strips. |
 | `deck_check.py` | Structural checks on a reveal.js deck: the viewport override, auto-animate pairing, type sizing, self-containment, house style. |
 | `canvas.py` | The general Canvas client: `get`/`post`/`put`/`delete`/`graphql` against any endpoint, with auth, pagination, rate-limit backoff, and the write gate. Every other Canvas script goes through it. |
 | `canvas_api.py` | The curated Canvas client. Roster, assignments, submissions, grades, announcements, `whoami`, `undo`. |
@@ -339,8 +381,8 @@ trusting it, and because these are useful directly if you want them.
 | `piazza_post.py` | Posts approved replies; privatizes public posts that leak code. |
 | `gradescope_fetch.py` | Reads a Gradescope course: assignments, roster, scores, submissions. Read-only. |
 
-`course_infra.py`, `prose_check.py`, `deck_check.py`, and every Canvas script are pure standard
-library.
+`course_infra.py`, `prose_check.py`, `deck_check.py`, `units.py`, and every Canvas script are pure
+standard library. `render_html.py` is the one exception, and it says which package is missing.
 
 ## Adding a platform
 
