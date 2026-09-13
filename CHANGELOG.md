@@ -7,6 +7,48 @@ and their trigger descriptions, script names and their command-line flags, the J
 scripts read and write, the reference file names a skill links to, and the documented safety
 rules. Prose improvements inside a reference are not a version bump. Renaming a flag is.
 
+## 0.8.0
+
+Adds the Canvas Inbox and the first slash commands. Conversations was the last
+major Canvas domain with no coverage at all: no reference, no client method, no
+mention. Messaging students is a large part of running a course, and the traps
+in this corner of the API are the kind that reach a real student before anyone
+notices.
+
+**Canvas Inbox** in `canvas_api.py`: `inbox`, `thread`, `reply`, `archive`,
+`sweep`, with `skills/canvas/references/conversations.md`.
+
+- The queue partitions by **who sent the last message**, which is the question
+  that decides whether a thread needs action. Unread does not answer it: a
+  thread can be read and unanswered, or unread and already handled by a TA.
+  Threads are tagged `NEEDS REPLY`, `STAFF REPLIED`, or `ANSWERED`, with staff
+  identified from real course enrollments rather than guessed.
+- `reply` verifies the send by re-reading the thread and checking the message
+  count moved by exactly one, because **`add_message` is not idempotent** and a
+  blind retry double-posts to a student. It exits nonzero rather than claiming
+  a success it cannot confirm.
+- `sweep` archives threads already answered that have had no new reply.
+- Writes use the existing two-switch gate and audit trail, so a reply is a dry
+  run until `--live` and is reversible from the log.
+- Three traps documented, each of which has caused a real incident: `force_new`
+  (without it a routine note can land inside an unrelated pre-existing thread,
+  such as a student's private accommodation thread), `group_conversation` for
+  multi-recipient sends (without it Canvas silently fans out per recipient), and
+  the absence of any real unsend.
+
+**Slash commands** (`commands/`), the first in this plugin: `/triage`,
+`/inbox`, `/announce`, `/week-check`, `/grades-import`, `/priorities`. Each
+defers to the skill that owns the work rather than restating it. `/week-check`
+exists for one specific failure: a module with `unlock_at` set but
+`published: false`, which opens nothing and is found only when students ask.
+
+**The standalone `canvas-lms` skill is deprecated and unlinked.** Its
+`~/.claude/skills/canvas-lms` symlink was removed; the repository is kept as
+history with a banner pointing here. The plugin had already absorbed it in
+0.5.0, and the plugin version is strictly better: courses by name rather than a
+hardcoded id, a write gate, an audit trail with `undo`, and course verification
+before it acts.
+
 ## 0.7.0
 
 Units, and the arc they form.

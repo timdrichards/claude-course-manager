@@ -37,6 +37,8 @@ Usage:
 import argparse
 import json
 import sys
+import html
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -193,6 +195,35 @@ class Canvas:
         return self.post(
             f"/courses/{self.course_id}/assignments/{aid}/submissions/update_grades", data)
 
+    # ------------------------------------------------------------ conversations
+
+    def conversations(self, scope="inbox"):
+        """Inbox threads for THIS course only. Without the course filter a
+        multi-course token triages somebody else's students."""
+        return self.get_all("/conversations", {
+            "scope": scope, "filter[]": f"course_{self.course_id}"})
+
+    def conversation(self, cid):
+        """One thread. The list endpoint returns previews only, and messages
+        come back newest-first, so sort before reading."""
+        c = self.get(f"/conversations/{cid}")
+        c["messages"] = sorted(c.get("messages", []), key=lambda m: m["created_at"])
+        return c
+
+    def add_message(self, cid, body):
+        return self.post(f"/conversations/{cid}/add_message", {"body": body})
+
+    def set_conversation_state(self, cid, state):
+        return self.put(f"/conversations/{cid}", {"conversation[workflow_state]": state})
+
+    def course_staff_ids(self):
+        out = set()
+        for t in ("TeacherEnrollment", "TaEnrollment", "DesignerEnrollment"):
+            for e in self.get_all(f"/courses/{self.course_id}/enrollments",
+                                  {"type[]": t, "state[]": "active"}):
+                out.add(e["user"]["id"])
+        return out
+
     def progress(self, progress_id):
         return self.get(f"/progress/{progress_id}")
 
@@ -295,6 +326,84 @@ def show_announcements(items):
         print(f"  {str(a.get('id')).ljust(9)} {when.ljust(17)} {a.get('title', '')}")
 
 
+# ----------------------------------------------------------------- triage
+
+NEEDS, STAFF_REPLIED, ANSWERED = "NEEDS REPLY", "STAFF REPLIED", "ANSWERED"
+
+
+def strip_html(text):
+    return html.unescape(re.sub(r"<[^>]+>", "", text or "")).strip()
+
+
+def triage_state(conv, my_id, staff_ids):
+    """A thread needs action when somebody else sent the LAST message.
+
+    Unread does not answer that question: a thread can be read and unanswered,
+    or unread and already handled by a TA. This is the only partition that
+    matches what a person actually has to do.
+    """
+    msgs = conv.get("messages") or []
+    if not msgs:
+        return ANSWERED, None
+    author = msgs[-1]["author_id"]
+    if author == my_id:
+        return ANSWERED, author
+    return (STAFF_REPLIED if author in staff_ids else NEEDS), author
+
+
+def build_queue(canvas, scope="inbox"):
+    my_id = canvas.whoami()["id"]
+    staff = canvas.course_staff_ids()
+    rows = []
+    for c in canvas.conversations(scope):
+        full = canvas.conversation(c["id"])
+        state, last = triage_state(full, my_id, staff)
+        names = {p["id"]: p.get("name", "?") for p in full.get("participants", [])}
+        rows.append({
+            "id": c["id"], "state": state,
+            "unread": c.get("workflow_state") == "unread",
+            "last_message_at": full.get("last_message_at") or "",
+            "messages": len(full.get("messages", [])),
+            "subject": full.get("subject") or "(no subject)",
+            "with": ", ".join(n for i, n in names.items() if i != my_id),
+            "last_from": names.get(last, "?"),
+        })
+    rows.sort(key=lambda r: r["last_message_at"])
+    return rows
+
+
+def show_inbox(rows):
+    print(f"{len(rows)} thread(s), oldest first")
+    for r in rows:
+        when = r["last_message_at"][:16].replace("T", " ")
+        flag = "UNREAD" if r["unread"] else "      "
+        print(f"  {str(r['id']).ljust(9)} {when.ljust(17)} {flag} "
+              f"{r['state'].ljust(13)} msgs={str(r['messages']).ljust(3)} "
+              f"{r['with'][:30].ljust(31)} {r['subject'][:44]}")
+        if r["state"] != ANSWERED:
+            print(f"{'':>28}last from: {r['last_from']}")
+    counts = {k: sum(1 for r in rows if r["state"] == k)
+              for k in (NEEDS, STAFF_REPLIED, ANSWERED)}
+    print(f"\n  {counts[NEEDS]} need a reply, {counts[STAFF_REPLIED]} answered by staff, "
+          f"{counts[ANSWERED]} already answered by you")
+
+
+def show_thread(canvas, cid):
+    c = canvas.conversation(cid)
+    my_id = canvas.whoami()["id"]
+    names = {p["id"]: p.get("name", "?") for p in c.get("participants", [])}
+    print(f"[{c['id']}] {c.get('subject')}   ({len(c['messages'])} messages)")
+    for m in c["messages"]:
+        who = names.get(m["author_id"], m["author_id"])
+        mine = " (you)" if m["author_id"] == my_id else ""
+        when = m["created_at"][:16].replace("T", " ")
+        print(f"\n-- {who}{mine} @ {when}")
+        print(strip_html(m["body"]))
+        for att in m.get("attachments") or []:
+            print(f"   [attachment] {att.get('display_name')}")
+    return c
+
+
 # ---------------------------------------------------------------------- main
 
 def build_client(root):
@@ -335,6 +444,25 @@ def main():
 
     for name in ("whoami", "course", "roster", "assignments", "announcements", "undo"):
         add(name)
+
+    p = add("inbox")
+    p.add_argument("--scope", default="inbox",
+                   choices=["inbox", "unread", "archived", "sent"])
+
+    p = add("thread"); p.add_argument("conversation_id")
+
+    p = add("reply")
+    p.add_argument("conversation_id")
+    p.add_argument("--file", help="Reply body")
+    p.add_argument("--text", help="Body text, instead of --file")
+    p.add_argument("--archive", action="store_true",
+                   help="Archive after a verified send")
+
+    p = add("archive")
+    p.add_argument("conversation_id")
+    p.add_argument("--undo", action="store_true", help="Return it to the inbox")
+
+    add("sweep")
 
     p = add("assignment"); p.add_argument("assignment_id")
     p = add("submissions"); p.add_argument("assignment_id")
@@ -410,6 +538,17 @@ def dispatch(args, root, canvas, cfg):
     if cmd == "submissions":
         data = canvas.submissions(args.assignment_id)
         show(data) if args.json else show_submissions(data)
+        return 0
+
+    if cmd == "inbox":
+        rows = build_queue(canvas, args.scope)
+        show(rows) if args.json else show_inbox(rows)
+        return 0
+
+    if cmd == "thread":
+        c = show_thread(canvas, args.conversation_id)
+        if args.json:
+            show(c)
         return 0
 
     # ------------------------------------------------------------- the writes
@@ -489,6 +628,69 @@ def dispatch(args, root, canvas, cfg):
         print(f"\nQueued as progress {result.get('id')}. Canvas applies these in the "
               f"background; check with:\n"
               f"  python3 canvas_api.py --course {root} submissions {args.assignment_id}")
+        return 0
+
+    if cmd == "reply":
+        body = read_body(args)
+        if not body.strip():
+            sys.exit("Empty body, refusing to send.")
+        conv = canvas.conversation(args.conversation_id)
+        before = len(conv["messages"])
+        names = {p["id"]: p.get("name", "?") for p in conv.get("participants", [])}
+        me_id = canvas.whoami()["id"]
+        others = ", ".join(n for i, n in names.items() if i != me_id)
+        print(f"Reply to [{conv['id']}] {conv.get('subject')!r}\nTo: {others}\n"
+              f"---\n{body}\n---")
+        if not check_write_allowed(root, cfg, args.live, args.override_mode):
+            return 0
+        canvas.add_message(args.conversation_id, body)
+        # add_message is NOT idempotent: a blind retry double-posts to a
+        # student. Verify by re-reading, never by sending again.
+        after = canvas.conversation(args.conversation_id)
+        last = after["messages"][-1]
+        ok = (len(after["messages"]) == before + 1
+              and last["author_id"] == me_id
+              and strip_html(body)[:40] in strip_html(last["body"]))
+        record(root, "reply", args.conversation_id,
+               before=before, after=len(after["messages"]), verified=ok)
+        if not ok:
+            sys.exit(f"SEND UNVERIFIED ({before} -> {len(after['messages'])} messages). "
+                     f"Inspect the thread before retrying; a repeat send double-posts.")
+        print(f"Sent and verified ({before} -> {len(after['messages'])} messages)")
+        if args.archive:
+            canvas.set_conversation_state(args.conversation_id, "archived")
+            record(root, "archive", args.conversation_id, before="read", after="archived")
+            print("Archived.")
+        return 0
+
+    if cmd == "archive":
+        state = "read" if args.undo else "archived"
+        conv = canvas.conversation(args.conversation_id)
+        print(f"[{conv['id']}] {conv.get('subject')!r} -> {state}")
+        if not check_write_allowed(root, cfg, args.live, args.override_mode):
+            return 0
+        canvas.set_conversation_state(args.conversation_id, state)
+        got = canvas.get(f"/conversations/{args.conversation_id}")["workflow_state"]
+        record(root, "archive", args.conversation_id,
+               before=conv.get("workflow_state"), after=got)
+        print(f"workflow_state = {got}")
+        return 0 if got == state else 1
+
+    if cmd == "sweep":
+        rows = [r for r in build_queue(canvas, "inbox") if r["state"] == ANSWERED]
+        if not rows:
+            print("Nothing to sweep: every inbox thread is still waiting on someone else.")
+            return 0
+        print(f"{len(rows)} thread(s) you already answered, with no new reply:")
+        for r in rows:
+            print(f"  {str(r['id']).ljust(9)} {r['subject'][:60]}")
+        if not check_write_allowed(root, cfg, args.live, args.override_mode):
+            return 0
+        for r in rows:
+            canvas.set_conversation_state(r["id"], "archived")
+            record(root, "archive", r["id"], before="read", after="archived",
+                   via="sweep")
+        print(f"Archived {len(rows)}.")
         return 0
 
     sys.exit(f"Unknown command {cmd!r}")
