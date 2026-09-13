@@ -52,6 +52,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 roster
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 assignments
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 submissions <assignment_id>
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 announcements
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 inbox
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 thread <conversation_id>
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 \
+    reply <conversation_id> --file draft.md --archive --live
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 \
     announce --title "Exam room change" --file body.md --live
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/canvas_api.py --course 326 \
@@ -182,6 +186,7 @@ shapes, and the quirks that waste time when unknown.
 | Quizzes of any kind | `references/quizzes.md` (**always default to Classic Quizzes**, New Quizzes cannot export student submissions or answers via API) |
 | Wiki pages, front page, generating and uploading authored page content, the local page cache | `references/pages.md` |
 | Discussions or announcements | `references/discussions-announcements.md` |
+| Canvas Inbox messages: triaging the queue, replying to a student, archiving, messaging a student or group | `references/conversations.md` (`canvas_api.py inbox|thread|reply|archive|sweep`; the queue partitions by who sent the last message, which is the question that decides whether a thread needs action) |
 | Students, rosters, sections, enrollments, matching a student across platforms | `references/students-enrollments.md` |
 | Submissions, grades, gradebook, comments, posting policy; bulk-downloading submission files | `references/submissions-grades.md` |
 | Importing Gradescope (or other CSV) grades into an assignment | `references/grade-sync.md` |
