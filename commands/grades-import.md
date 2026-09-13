@@ -5,7 +5,7 @@ argument-hint: [course] [csv path]
 
 Import **$2** into a Canvas assignment for course **$1**.
 
-Read `references/grade-sync.md` and `references/late-policy.md` in the `canvas`
+Read `${CLAUDE_PLUGIN_ROOT}/skills/canvas/references/grade-sync.md` and `${CLAUDE_PLUGIN_ROOT}/skills/canvas/references/late-policy.md` in the `canvas`
 skill first. Two rules in there are silent-corruption risks, not style notes:
 
 - **Diff against `entered_score`, never `score`.** `score` is post-late-policy,

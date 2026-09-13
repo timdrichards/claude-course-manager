@@ -5,7 +5,7 @@ argument-hint: [course]
 
 Run a full message triage for course **$1** (ask which course if that is empty).
 
-Use the `canvas` skill, `references/conversations.md`, which owns this process.
+Use the `canvas` skill, `${CLAUDE_PLUGIN_ROOT}/skills/canvas/references/conversations.md`, which owns this process.
 If the course folder has `course/procedures/TRIAGE_PROMPT.md`, read that too: it
 carries anything course-specific, including the email half, which the Canvas
 tooling does not touch.
